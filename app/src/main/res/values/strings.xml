@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">MyStoryApp</string>
+    <string name="error_email">Email Error\n</string>
+    <string name="password_error">Password Error\n</string>
+    <string name="register_logo">Logo Register</string>
+    <string name="title_register_page">Title Register Page\n</string>
+    <string name="name">Name\n</string>
+    <string name="password">Password</string>
+    <string name="enter_your_password">     Enter Your Password\n</string>
+    <string name="signup">Register</string>
+    <string name="app_version">Ver 1.0.12</string>
+    <string name="email">Email</string>
+    <string name="title_login_page">Login \n</string>
+    <string name="message_login_page">Welcome To Login Pages\n</string>
+    <string name="login">Login\n</string>
+    <string name="logout">Logout</string>
+    <string name="camera_button">Button Camera\n</string>
+    <string name="camera_view">View_Camera\n</string>
+    <string name="add_Story">Add Story\n</string>
+    <string name="story_image">Image</string>
+    <string name="description">Deskripsi</string>
+</resources>
