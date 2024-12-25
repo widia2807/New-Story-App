@@ -2,6 +2,7 @@ package com.example.mystoryapp.data.repo
 
 import android.util.Log
 import com.example.mystoryapp.data.response.*
+import com.example.mystoryapp.data.retrofit.ApiConfig
 import com.example.mystoryapp.data.retrofit.ApiService
 import com.example.mystoryapp.data.userpref.UserModel
 import com.example.mystoryapp.data.userpref.UserPreference
@@ -16,7 +17,7 @@ class UserManager(
     private val userPreferences: UserPreference,
     private val api: ApiService
 ) {
-
+    private var authenticatedApi: ApiService? = null
     suspend fun registerUser(name: String, email: String, password: String): RegisterResponse {
         return try {
             val registerResult = api.register(name, email, password)
@@ -32,11 +33,15 @@ class UserManager(
 
     suspend fun loginUser(email: String, password: String): LoginResponse {
         return try {
-            api.login(email, password)
+            val response = api.login(email, password)
+            // Store the authenticated API service for future use
+            response.loginResult?.token?.let { token ->
+                authenticatedApi = ApiConfig.getAuthenticatedApiService(token)
+            }
+            response
         } catch (exception: HttpException) {
             val errorJson = exception.response()?.errorBody()?.string()
             val errorResponse = Gson().fromJson(errorJson, ErrorResponse::class.java)
-            Log.e("UserManager", "Login failed: ${errorResponse.message}")
             throw exception
         }
     }

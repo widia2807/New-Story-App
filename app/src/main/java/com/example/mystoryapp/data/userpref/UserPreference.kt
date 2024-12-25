@@ -16,7 +16,26 @@ import java.io.IOException
 
 val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
-class UserPreference(private val dataStore: DataStore<Preferences>) {
+class UserPreference private constructor(private val dataStore: DataStore<Preferences>) {
+
+    companion object {
+        private val USER_ID_KEY = stringPreferencesKey("user_id")
+        private val EMAIL_KEY = stringPreferencesKey("email")
+        private val NAME_KEY = stringPreferencesKey("name")
+        private val TOKEN_KEY = stringPreferencesKey("token")
+        private val IS_LOGIN_KEY = booleanPreferencesKey("is_login")
+
+        @Volatile
+        private var INSTANCE: UserPreference? = null
+
+        fun getInstance(dataStore: DataStore<Preferences>): UserPreference {
+            return INSTANCE ?: synchronized(this) {
+                val instance = UserPreference(dataStore)
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
 
     suspend fun saveSession(user: UserModel) {
         dataStore.edit { preferences ->
@@ -43,11 +62,9 @@ class UserPreference(private val dataStore: DataStore<Preferences>) {
             )
         }
 
-    companion object {
-        private val USER_ID_KEY = stringPreferencesKey("userId")
-        private val EMAIL_KEY = stringPreferencesKey("email")
-        private val NAME_KEY = stringPreferencesKey("name")
-        private val TOKEN_KEY = stringPreferencesKey("token")
-        private val IS_LOGIN_KEY = booleanPreferencesKey("isLoggedIn")
+    suspend fun logout() {
+        dataStore.edit { preferences ->
+            preferences.clear()
+        }
     }
 }

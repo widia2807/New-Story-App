@@ -10,6 +10,7 @@ import android.util.Patterns
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
+import com.example.mystoryapp.data.retrofit.ApiConfig
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -18,7 +19,7 @@ import com.example.mystoryapp.ui.main.main2.ViewModelFactory
 
 class RegisterActivity : AppCompatActivity() {
     private val viewModel by viewModels<RegisterViewModel> {
-        ViewModelFactory.getInstance(this, com.example.mystoryapp.data.retrofit.ApiConfig().getApiService("token"))
+        ViewModelFactory.getInstance(this, ApiConfig.getApiService("token"))
     }
 
     private lateinit var binding: ActivityRegisterBinding

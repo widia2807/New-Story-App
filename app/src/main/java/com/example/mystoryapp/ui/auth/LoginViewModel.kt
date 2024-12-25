@@ -12,6 +12,7 @@ import com.example.mystoryapp.data.userpref.UserPreference
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -23,20 +24,18 @@ class LoginViewModel(
     private val _loginState = MutableStateFlow<NetworkResult<LoginResponse>>(NetworkResult.Loading)
     val loginState: StateFlow<NetworkResult<LoginResponse>> = _loginState
 
-    fun login(email: String, password: String) {
-        viewModelScope.launch {
-            _loginState.value = NetworkResult.Loading
-            try {
-                val response = userManager.loginUser(email, password)
-                if (response.error == false) {
-                    _loginState.value = NetworkResult.Success(response)
-                } else {
-                    _loginState.value = NetworkResult.Error(response.message ?: "Unknown error occurred")
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Login error")
-                _loginState.value = NetworkResult.Error(e.message ?: "Network error occurred")
+    fun login(email: String, password: String) = flow {
+        emit(NetworkResult.Loading)
+        try {
+            val response = userManager.loginUser(email, password)
+            if (response.error == false) {
+                emit(NetworkResult.Success(response))
+            } else {
+                emit(NetworkResult.Error(response.message ?: "Unknown error occurred"))
             }
+        } catch (e: Exception) {
+            Timber.e(e, "Login error")
+            emit(NetworkResult.Error(e.message ?: "Network error occurred"))
         }
     }
 
@@ -45,12 +44,12 @@ class LoginViewModel(
             try {
                 preferences.saveSession(
                     UserModel(
-                    email = session.email,
-                    token = session.token,
-                    isLogin = session.isLoggedIn,
-                    id = session.userId,
-                    name = session.name
-                )
+                        email = session.email,
+                        token = session.token,
+                        isLogin = session.isLoggedIn,
+                        id = session.userId,
+                        name = session.name
+                    )
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Error saving user session")

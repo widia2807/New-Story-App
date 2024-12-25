@@ -12,12 +12,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.mystoryapp.R
-import com.example.mystoryapp.data.repo.UserManager
+import com.example.mystoryapp.data.response.LoginResponse
 import com.example.mystoryapp.data.response.UserSession
 import com.example.mystoryapp.data.retrofit.ApiConfig
 import com.example.mystoryapp.data.userpref.UserPreference
 import com.example.mystoryapp.data.userpref.dataStore
 import com.example.mystoryapp.databinding.ActivityLoginBinding
+import com.example.mystoryapp.ui.main.main2.ViewModelFactory
 import com.google.android.ads.mediationtestsuite.activities.HomeActivity
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -26,8 +27,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var userPreference: UserPreference
 
-    private val viewModel: LoginViewModel by viewModels {
-        LoginViewModelFactory(UserManager(ApiConfig.getApiService()))
+    private val viewModel by viewModels<LoginViewModel> {
+        ViewModelFactory.getInstance(this, ApiConfig.getApiService())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,11 +82,12 @@ class LoginActivity : AppCompatActivity() {
                 viewModel.login(email, password).collect { result ->
                     when (result) {
                         is NetworkResult.Success -> {
+                            val loginResponse = result.data as LoginResponse
                             val session = UserSession(
-                                userId = result.data.loginResult?.userId ?: "",
-                                token = result.data.loginResult?.token ?: "",
+                                userId = loginResponse.loginResult?.userId ?: "",
+                                token = loginResponse.loginResult?.token ?: "",
                                 email = email,
-                                name = result.data.loginResult?.name ?: "",
+                                name = loginResponse.loginResult?.name ?: "",
                                 isLoggedIn = true
                             )
                             viewModel.saveUserSession(session)
