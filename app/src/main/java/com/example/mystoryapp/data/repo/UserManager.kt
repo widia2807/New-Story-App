@@ -1,5 +1,6 @@
 package com.example.mystoryapp.data.repo
 
+import android.net.http.HttpException
 import android.util.Log
 import com.example.mystoryapp.data.response.DetailStoryResponse
 import com.example.mystoryapp.data.response.ErrorResponse

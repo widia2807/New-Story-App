@@ -8,33 +8,33 @@ import com.example.mystoryapp.data.retrofit.ApiService
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(private val apiService: ApiService) : ViewModel() {
+    private val _loadingState = MutableLiveData<Boolean>()
+    val loadingState: LiveData<Boolean> = _loadingState
 
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> = _isLoading
+    private val _registrationOutcome = MutableLiveData<String?>()
+    val registrationOutcome: LiveData<String?> = _registrationOutcome
 
-    private val _registerResult = MutableLiveData<String?>()
-    val registerResult: LiveData<String?> = _registerResult
+    private val _errorMessage = MutableLiveData<String?>()
+    val errorMessage: LiveData<String?> = _errorMessage
 
-    private val _error = MutableLiveData<String?>()
-    val error: LiveData<String?> = _error
-
-    fun register(name: String, email: String, password: String) {
-        _isLoading.value = true
+    fun registerUser(name: String, email: String, password: String) {
+        _loadingState.value = true
         viewModelScope.launch {
             try {
                 val response = apiService.registerUser(name, email, password)
-                if (response.isSuccessful && response.body() != null) {
-                    _registerResult.value = response.body()?.message
+                if (response.error == false) {
+                    _registrationOutcome.value = response.message
                 } else {
-                    _error.value = response.errorBody()?.string() ?: "Unknown error occurred"
+                    _errorMessage.value = response.message
                 }
             } catch (e: Exception) {
-                _error.value = e.message ?: "Network error occurred"
+                _errorMessage.value = e.message
             } finally {
-                _isLoading.value = false
+                _loadingState.value = false
             }
         }
     }
+
 
     fun clearErrors() {
         _error.value = null

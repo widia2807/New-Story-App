@@ -19,4 +19,8 @@
     <string name="add_Story">Add Story\n</string>
     <string name="story_image">Image</string>
     <string name="description">Deskripsi</string>
+    <string name="register_link">Register Now</string>
+    <string name="list_picture">Picture</string>
+    <string name="title_welcome_page">Welcome Friends</string>
+    <string name="message_welcome_page">We wait you to share your Story</string>
 </resources>

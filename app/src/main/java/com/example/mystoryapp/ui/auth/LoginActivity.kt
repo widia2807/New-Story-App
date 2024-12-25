@@ -14,20 +14,20 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.mystoryapp.R
 import com.example.mystoryapp.data.repo.UserManager
+import com.example.mystoryapp.data.response.UserSession
 import com.example.mystoryapp.data.retrofit.ApiService
 import com.example.mystoryapp.data.userpref.UserPreference
 import com.example.mystoryapp.databinding.ActivityLoginBinding
 import com.google.android.ads.mediationtestsuite.activities.HomeActivity
 import kotlinx.coroutines.launch
-import java.lang.ref.Cleaner.create
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
-    private lateinit var userPreferences: UserPreference
+    private lateinit var userPreference: UserPreference
 
     private val viewModel: LoginViewModel by viewModels {
         LoginViewModelFactory(
-            UserManager(ApiService.create()),
+            UserManager(ApiService.getInstance()), // Error di sini
             UserPreference(this)
         )
     }
@@ -80,7 +80,7 @@ class LoginActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 viewModel.login(email, password).collect { result ->
                     when (result) {
-                        is NetworkResult.Success -> {
+                        is NetworkResult.Success<*> -> {
                             val session = UserSession(
                                 email = email,
                                 token = result.data.token,
@@ -160,17 +160,18 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setupAnimations() {
-        // Logo animation
-        ObjectAnimator.ofFloat(binding.logoImage, View.TRANSLATION_Y, -50f, 50f).apply {
-            duration = 4000
+        val logo = binding.imageView
+
+
+        ObjectAnimator.ofFloat(logo, View.TRANSLATION_Y, -50f, 50f).apply {
+            duration = 4000L
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
         }.start()
 
-        // Sequential fade-in animations
         val fadeAnimations = listOf(
-            binding.titleText,
-            binding.subtitleText,
+            binding.titleTextView,
+            binding.messageTextView,
             binding.emailEditTextLayout,
             binding.passwordEditTextLayout,
             binding.loginButton,
@@ -180,11 +181,6 @@ class LoginActivity : AppCompatActivity() {
                 duration = 300
             }
         }
-
-        AnimatorSet().apply {
-            playSequentially(fadeAnimations)
-            startDelay = 500
-        }.start()
     }
 
     private fun showDialog(
