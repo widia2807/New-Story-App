@@ -10,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 
 class StoryDataSource(
     private val api: ApiService,
-    private val preferences: UserPreference // Menyimpan preferensi pengguna
+    private val preferences: UserPreference
 ) : PagingSource<Int, ListStoryItem>() {
 
     companion object {
@@ -20,10 +20,9 @@ class StoryDataSource(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ListStoryItem> {
         return try {
             val currentPage = params.key ?: START_PAGE_INDEX
-            // Mengambil token otentikasi secara sinkron
             val authToken = runBlocking { preferences.getSession().first().token }
             val response = api.getStories(
-                token = "Bearer $authToken", // Token digunakan untuk otorisasi
+                token = "Bearer $authToken",
                 page = currentPage,
                 size = params.loadSize
             )

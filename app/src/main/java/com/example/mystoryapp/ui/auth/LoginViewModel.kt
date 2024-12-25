@@ -7,6 +7,7 @@ import com.example.mystoryapp.data.repo.UserManager
 import com.example.mystoryapp.data.response.LoginResponse
 import com.example.mystoryapp.data.response.UserSession
 import com.example.mystoryapp.data.retrofit.ApiService
+import com.example.mystoryapp.data.userpref.UserModel
 import com.example.mystoryapp.data.userpref.UserPreference
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class LoginViewModel(
-    private val repository: UserRepository,
+    private val userManager: UserManager,
     private val preferences: UserPreference
 ) : ViewModel() {
 
@@ -26,7 +27,7 @@ class LoginViewModel(
         viewModelScope.launch {
             _loginState.value = NetworkResult.Loading
             try {
-                val response = repository.login(email, password)
+                val response = userManager.loginUser(email, password)
                 if (response.error == false) {
                     _loginState.value = NetworkResult.Success(response)
                 } else {
@@ -42,7 +43,15 @@ class LoginViewModel(
     fun saveUserSession(session: UserSession) {
         viewModelScope.launch {
             try {
-                preferences.saveSession(session)
+                preferences.saveSession(
+                    UserModel(
+                    email = session.email,
+                    token = session.token,
+                    isLogin = session.isLoggedIn,
+                    id = session.userId,
+                    name = session.name
+                )
+                )
             } catch (e: Exception) {
                 Timber.e(e, "Error saving user session")
             }
@@ -50,26 +59,15 @@ class LoginViewModel(
     }
 
     fun getUserSession(): Flow<UserSession> = preferences.getSession()
-
-    fun logout() {
-        viewModelScope.launch {
-            try {
-                preferences.logout()
-            } catch (e: Exception) {
-                Timber.e(e, "Error clearing user session")
-            }
-        }
-    }
 }
 
 class LoginViewModelFactory(
-    private val repository: UserManager,
+    private val userManager: UserManager,
     private val preferences: UserPreference
 ) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
-            return LoginViewModel(repository, preferences) as T
+            return LoginViewModel(userManager, preferences) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

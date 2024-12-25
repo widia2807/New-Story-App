@@ -5,7 +5,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.example.mystoryapp.data.response.DetailStoryResponse
 import com.example.mystoryapp.data.response.ListStoryItem
-import com.example.mystoryapp.data.response.Story
 import com.example.mystoryapp.data.response.StoryResponse
 import com.example.mystoryapp.data.retrofit.ApiService
 import com.example.mystoryapp.data.userpref.UserPreference
@@ -15,23 +14,19 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import retrofit2.HttpException
 import java.io.IOException
-import retrofit2.await
+
 
 class StoryManager private constructor(
     private val api: ApiService,
     private val preferences: UserPreference
 ) {
 
-    fun getStories(token: String): Flow<NetworkResult<List<Story>>> = flow {
+    fun getStories(token: String): Flow<NetworkResult<List<ListStoryItem?>>> = flow {
         emit(NetworkResult.Loading)
         try {
-            val response = api.getStories("Bearer $token").await()
-            if (response.isSuccessful) {
-                val stories = response.body()?.listStory ?: emptyList()
-                emit(NetworkResult.Success(stories))
-            } else {
-                emit(NetworkResult.Error(response.message() ?: "Unknown error"))
-            }
+            val response = api.getStories("Bearer $token")
+            val stories = response.listStory ?: emptyList()
+            emit(NetworkResult.Success(stories))
         } catch (e: HttpException) {
             emit(NetworkResult.Error(e.message ?: "An HTTP error occurred"))
         } catch (e: IOException) {
@@ -41,24 +36,17 @@ class StoryManager private constructor(
         }
     }
 
+
     suspend fun fetchAllStories(): StoryResponse {
-        return try {
-            val authToken = preferences.getSession().firstOrNull()?.token
-                ?: throw IllegalStateException("Authentication token is missing")
-            api.getStories(token = "Bearer $authToken").await()
-        } catch (exception: Exception) {
-            throw exception
-        }
+        val authToken = preferences.getSession().firstOrNull()?.token
+            ?: throw IllegalStateException("Authentication token is missing")
+        return api.getStories(token = "Bearer $authToken")
     }
 
     suspend fun fetchStoryDetails(storyId: String): DetailStoryResponse {
-        return try {
-            val authToken = preferences.getSession().firstOrNull()?.token
-                ?: throw IllegalStateException("Authentication token is missing")
-            api.getStoryDetail(token = "Bearer $authToken", id = storyId).await()
-        } catch (exception: Exception) {
-            throw exception
-        }
+        val authToken = preferences.getSession().firstOrNull()?.token
+            ?: throw IllegalStateException("Authentication token is missing")
+        return api.getStoryDetail(token = "Bearer $authToken", id = storyId)
     }
 
     fun getPaginatedStories(): Flow<PagingData<ListStoryItem>> {

@@ -1,6 +1,5 @@
 package com.example.mystoryapp.ui.auth
 
-import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
@@ -15,10 +14,12 @@ import androidx.lifecycle.lifecycleScope
 import com.example.mystoryapp.R
 import com.example.mystoryapp.data.repo.UserManager
 import com.example.mystoryapp.data.response.UserSession
-import com.example.mystoryapp.data.retrofit.ApiService
+import com.example.mystoryapp.data.retrofit.ApiConfig
 import com.example.mystoryapp.data.userpref.UserPreference
+import com.example.mystoryapp.data.userpref.dataStore
 import com.example.mystoryapp.databinding.ActivityLoginBinding
 import com.google.android.ads.mediationtestsuite.activities.HomeActivity
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -26,16 +27,15 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var userPreference: UserPreference
 
     private val viewModel: LoginViewModel by viewModels {
-        LoginViewModelFactory(
-            UserManager(ApiService.getInstance()), // Error di sini
-            UserPreference(this)
-        )
+        LoginViewModelFactory(UserManager(ApiConfig.getApiService()))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        userPreference = UserPreference.getInstance(dataStore)
 
         setupWindowDecorations()
         initializeViews()
@@ -80,10 +80,12 @@ class LoginActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 viewModel.login(email, password).collect { result ->
                     when (result) {
-                        is NetworkResult.Success<*> -> {
+                        is NetworkResult.Success -> {
                             val session = UserSession(
+                                userId = result.data.loginResult?.userId ?: "",
+                                token = result.data.loginResult?.token ?: "",
                                 email = email,
-                                token = result.data.token,
+                                name = result.data.loginResult?.name ?: "",
                                 isLoggedIn = true
                             )
                             viewModel.saveUserSession(session)
@@ -102,6 +104,7 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
+
 
     private fun validateInputs(email: String, password: String): Boolean {
         var isValid = true
@@ -161,7 +164,6 @@ class LoginActivity : AppCompatActivity() {
 
     private fun setupAnimations() {
         val logo = binding.imageView
-
 
         ObjectAnimator.ofFloat(logo, View.TRANSLATION_Y, -50f, 50f).apply {
             duration = 4000L

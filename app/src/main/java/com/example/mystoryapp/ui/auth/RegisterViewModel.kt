@@ -4,10 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mystoryapp.data.retrofit.ApiService
+import com.example.mystoryapp.data.repo.UserManager
 import kotlinx.coroutines.launch
 
-class RegisterViewModel(private val apiService: ApiService) : ViewModel() {
+class RegisterViewModel(private val userManager: UserManager) : ViewModel() {
     private val _loadingState = MutableLiveData<Boolean>()
     val loadingState: LiveData<Boolean> = _loadingState
 
@@ -18,10 +18,10 @@ class RegisterViewModel(private val apiService: ApiService) : ViewModel() {
     val errorMessage: LiveData<String?> = _errorMessage
 
     fun registerUser(name: String, email: String, password: String) {
-        _loadingState.value = true
         viewModelScope.launch {
+            _loadingState.value = true
             try {
-                val response = apiService.registerUser(name, email, password)
+                val response = userManager.registerUser(name, email, password)
                 if (response.error == false) {
                     _registrationOutcome.value = response.message
                 } else {
@@ -33,10 +33,5 @@ class RegisterViewModel(private val apiService: ApiService) : ViewModel() {
                 _loadingState.value = false
             }
         }
-    }
-
-
-    fun clearErrors() {
-        _error.value = null
     }
 }
