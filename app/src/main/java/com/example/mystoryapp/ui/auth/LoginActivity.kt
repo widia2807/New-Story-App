@@ -18,8 +18,8 @@ import com.example.mystoryapp.data.retrofit.ApiConfig
 import com.example.mystoryapp.data.userpref.UserPreference
 import com.example.mystoryapp.data.userpref.dataStore
 import com.example.mystoryapp.databinding.ActivityLoginBinding
+import com.example.mystoryapp.ui.main.main1.MainActivity
 import com.example.mystoryapp.ui.main.main2.ViewModelFactory
-import com.google.android.ads.mediationtestsuite.activities.HomeActivity
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -210,7 +210,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun navigateToHome() {
-        startActivity(Intent(this, HomeActivity::class.java).apply {
+        startActivity(Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
         finish()
