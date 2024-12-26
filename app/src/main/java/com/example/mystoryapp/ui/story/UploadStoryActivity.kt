@@ -7,28 +7,38 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.mystoryapp.R
+import com.example.mystoryapp.data.response.AddResponse
+import com.example.mystoryapp.data.retrofit.ApiConfig
 import com.example.mystoryapp.data.userpref.UserPreference
 import com.example.mystoryapp.data.userpref.dataStore
 import com.example.mystoryapp.databinding.ActivityUploadBinding
+import com.example.mystoryapp.ui.main.main1.MainViewModel
+import com.example.mystoryapp.ui.main.main2.ViewModelFactory
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 
 class UploadStoryActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUploadBinding
     private lateinit var userPreference: UserPreference
     private var currentImageUri: Uri? = null
+    private val viewModel: MainViewModel by viewModels {
+        ViewModelFactory.getInstance(this, ApiConfig.getApiService())
+    }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        // Save the image URI
         currentImageUri?.let {
             outState.putString(EXTRA_IMAGE_URI, it.toString())
         }
@@ -97,23 +107,22 @@ class UploadStoryActivity : AppCompatActivity() {
             showLoading(true)
 
             lifecycleScope.launch {
-                val token = withContext(Dispatchers.IO) {
-                    userPreference.getSession().firstOrNull()?.token
-                }
+                try {
+                    val token = userPreference.getSession().first().token
 
-                token?.let { it ->
-                    val requestBody = description.toRequestBody("text/plain".toMediaType())
-                    val requestImageFile = imageFile.asRequestBody("image/jpeg".toMediaType())
-                    val multipartBody = MultipartBody.Part.createFormData(
-                        "photo",
-                        imageFile.name,
-                        requestImageFile
-                    )
-                    try {
-                        val apiService = ApiConfig().getApiService(it)
+                    if (token.isNotEmpty()) {
+                        val requestBody = description.toRequestBody("text/plain".toMediaType())
+                        val requestImageFile = imageFile.asRequestBody("image/jpeg".toMediaType())
+                        val multipartBody = MultipartBody.Part.createFormData(
+                            "photo",
+                            imageFile.name,
+                            requestImageFile
+                        )
+
+                        val apiService = ApiConfig.getAuthenticatedApiService(token)
                         Log.d("PhotoActivity", "Request: Sending upload request to server")
                         val successResponse = apiService.addStory(
-                            token = "Bearer $it",
+                            token = "Bearer $token",
                             photo = multipartBody,
                             description = requestBody
                         )
@@ -122,19 +131,21 @@ class UploadStoryActivity : AppCompatActivity() {
                             Log.d("PhotoActivity", "Response message: $it")
                         }
                         finish()
-                    } catch (e: HttpException) {
-                        val errorBody = e.response()?.errorBody()?.string()
-                        val errorResponse = Gson().fromJson(errorBody, UploadResponse::class.java)
-                        errorResponse.message?.let {
-                            showToast(it)
-                            Log.e("PhotoActivity", "Error message: $it")
-                        }
-                    } finally {
-                        showLoading(false)
+                    } else {
+                        showToast(getString(R.string.empty_image_warning))
                     }
-                } ?: showToast(getString(R.string.empty_image_warning))
+                } catch (e: HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string()
+                    val errorResponse = Gson().fromJson(errorBody, AddResponse::class.java)
+                    errorResponse.message?.let {
+                        showToast(it)
+                        Log.e("PhotoActivity", "Error message: $it")
+                    }
+                } finally {
+                    showLoading(false)
+                }
             }
-        }
+        } ?: showToast(getString(R.string.empty_image_warning))
     }
 
     private fun showLoading(isLoading: Boolean) {

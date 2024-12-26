@@ -23,4 +23,9 @@
     <string name="list_picture">Picture</string>
     <string name="title_welcome_page">Welcome Friends</string>
     <string name="message_welcome_page">We wait you to share your Story</string>
+    <string name="photo">Photo</string>
+    <string name="gallery">Gallery</string>
+    <string name="camera">Camera</string>
+    <string name="upload">Upload</string>
+    <string name="empty_image_warning">Image Empty</string>
 </resources>

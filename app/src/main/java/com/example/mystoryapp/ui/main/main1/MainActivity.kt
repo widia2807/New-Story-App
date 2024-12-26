@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mystoryapp.R
+import com.example.mystoryapp.data.retrofit.ApiConfig
 import com.example.mystoryapp.databinding.ActivityMainBinding
 import com.example.mystoryapp.ui.main.main2.ViewModelFactory
 import com.example.mystoryapp.ui.main.main2.WelcomeActivity
@@ -27,7 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var storyAdapter: MainAdapter
     private val viewModel: MainViewModel by viewModels {
-        ViewModelFactory.getInstance(this, com.example.mystoryapp.data.retrofit.ApiConfig().getApiService("token"))
+        ViewModelFactory.getInstance(this, ApiConfig.getApiService())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         setupFab()
         animateViews()
     }
+
 
     private fun setupObservers() {
         viewModel.getSession().observe(this) { user ->
@@ -87,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         binding.rvUser.animate().translationY(0f).alpha(1f).duration = 1000
         binding.fabAdd.animate().translationY(0f).alpha(1f).duration = 1000
     }
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)

@@ -3,6 +3,7 @@ package com.example.mystoryapp.ui.main.main1
 import androidx.lifecycle.LiveData
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import com.example.mystoryapp.data.repo.StoryManager
@@ -18,19 +19,19 @@ class MainViewModel(
     private val storyManager: StoryManager
 ) : ViewModel() {
 
-    fun getUserSession(): LiveData<UserModel> {
-        return userManager.getSession().asLiveData()
+    fun getSession(): LiveData<UserModel> = userManager.retrieveUserSession().asLiveData()
+
+    fun logout() {
+        viewModelScope.launch {
+            userManager.clearSession()
+        }
     }
 
-    fun logoutUser() {
-        viewModelScope.launch { userManager.logout() }
+    fun getStoryPager(): Flow<PagingData<ListStoryItem>> {
+        return storyManager.getPaginatedStories()
     }
 
-    suspend fun fetchStoryById(storyId: String): DetailStoryResponse {
-        return storyManager.getStoryById(storyId)
-    }
-
-    fun getStoryPagingData(): Flow<PagingData<ListStoryItem>> {
-        return storyManager.getStoryPager()
+    suspend fun fetchStoryDetail(storyId: String): DetailStoryResponse {
+        return storyManager.fetchStoryDetails(storyId)
     }
 }

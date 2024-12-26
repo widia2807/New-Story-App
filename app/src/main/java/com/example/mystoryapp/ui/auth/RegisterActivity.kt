@@ -19,7 +19,7 @@ import com.example.mystoryapp.ui.main.main2.ViewModelFactory
 
 class RegisterActivity : AppCompatActivity() {
     private val viewModel by viewModels<RegisterViewModel> {
-        ViewModelFactory.getInstance(this, ApiConfig.getApiService("token"))
+        ViewModelFactory.getInstance(this, ApiConfig.getAuthenticatedApiService("token"))
     }
 
     private lateinit var binding: ActivityRegisterBinding

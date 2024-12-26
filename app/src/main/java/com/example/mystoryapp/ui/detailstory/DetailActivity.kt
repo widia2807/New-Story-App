@@ -10,13 +10,13 @@ import com.example.mystoryapp.data.response.DetailStoryResponse
 import com.example.mystoryapp.databinding.ActivityDetailBinding
 import com.example.mystoryapp.ui.main.main1.MainViewModel
 import com.example.mystoryapp.ui.main.main2.ViewModelFactory
+import com.example.mystoryapp.data.retrofit.ApiConfig
 import kotlinx.coroutines.launch
 
 class DetailActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityDetailBinding
     private val viewModel: MainViewModel by viewModels {
-        ViewModelFactory.getInstance(this, com.example.mystoryapp.data.retrofit.ApiConfig().getApiService("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyLXlqNXBjX0xBUkNfQWdLNjEiLCJpYXQiOjE2NDE3OTk5NDl9.flEMaQ7zsdYkxuyGbiXjEDXO8kuDTcI__3UjCwt6R_I"))
+        ViewModelFactory.getInstance(this, ApiConfig.getApiService())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +26,7 @@ class DetailActivity : AppCompatActivity() {
 
         val storyId = intent.getStringExtra(EXTRA_STORY_ID) ?: run {
             Log.e(TAG, "No Story ID passed to activity")
+            finish()
             return
         }
 

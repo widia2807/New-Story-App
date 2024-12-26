@@ -11,16 +11,15 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 object DependencyProvider {
-
     fun createUserRepository(context: Context, apiService: ApiService): UserManager {
-        val preferences = UserPreference(context.dataStore) // Gunakan ekstensi dataStore
+        val preferences = UserPreference.getInstance(context.dataStore)
         return UserManager.createInstance(preferences, apiService)
     }
 
     fun createStoryRepository(context: Context): StoryManager {
-        val userPreferences = UserPreference(context.dataStore)
+        val userPreferences = UserPreference.getInstance(context.dataStore)
         val userSession = runBlocking { userPreferences.getSession().first() }
-        val apiClient = ApiConfig.getApiService(userSession.token)
+        val apiClient = ApiConfig.getApiService()
         return StoryManager.createInstance(apiClient, userPreferences)
     }
 }
