@@ -57,7 +57,16 @@ class LoginViewModel(
         }
     }
 
+
     fun getUserSession(): Flow<UserSession> = preferences.getSession()
+
+    fun verifySession() {
+        viewModelScope.launch {
+            preferences.getSession().collect { session ->
+                Timber.d("Session state: isLoggedIn=${session.isLoggedIn}, token=${session.token}")
+            }
+        }
+    }
 }
 
 class LoginViewModelFactory(
@@ -86,6 +95,8 @@ class UserRepositoryImpl(private val apiService: ApiService) : UserRepository {
     override suspend fun login(email: String, password: String): LoginResponse {
         return apiService.login(email, password)
     }
+
+
 }
 
 

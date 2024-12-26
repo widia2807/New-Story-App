@@ -88,10 +88,10 @@ class LoginActivity : AppCompatActivity() {
                                 token = loginResponse.loginResult?.token ?: "",
                                 email = email,
                                 name = loginResponse.loginResult?.name ?: "",
-                                isLoggedIn = true
+                                isLoggedIn = true  // Make sure this is set to true
                             )
                             viewModel.saveUserSession(session)
-                            navigateToHome()
+                            navigateToHome()  // This should directly navigate to MainActivity
                         }
                         is NetworkResult.Error -> {
                             handleLoginError(result.message, email)
@@ -215,7 +215,6 @@ class LoginActivity : AppCompatActivity() {
         })
         finish()
     }
-
     private fun navigateToRegister() {
         startActivity(Intent(this, RegisterActivity::class.java))
     }

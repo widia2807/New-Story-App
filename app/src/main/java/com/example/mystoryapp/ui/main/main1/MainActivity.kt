@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupObservers() {
         viewModel.getSession().observe(this) { user ->
-            if (!user.isLogin || user.token.isBlank()) {
+            if (!user.isLogin|| user.token.isBlank()) {
                 navigateToWelcome()
             } else {
                 fetchStories()
