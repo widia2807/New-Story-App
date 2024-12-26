@@ -14,45 +14,44 @@ import okhttp3.RequestBody
 import retrofit2.HttpException
 
 class UserManager(
-    private val userPreferences: UserPreference,
-    private val api: ApiService
+    private val apiService: ApiService,
+    private val preference: UserPreference
+
+
+
 ) {
     private var authenticatedApi: ApiService? = null
     suspend fun registerUser(name: String, email: String, password: String): RegisterResponse {
         return try {
-            val registerResult = api.register(name, email, password)
-            Log.i("UserManager", "Registration successful: $registerResult")
-            registerResult
+            apiService.register(name, email, password)
         } catch (exception: HttpException) {
             val errorJson = exception.response()?.errorBody()?.string()
             val errorResponse = Gson().fromJson(errorJson, ErrorResponse::class.java)
-            Log.e("UserManager", "Registration failed: ${errorResponse.message}")
-            throw exception
+            throw Exception("Registration failed: ${errorResponse.message}")
         }
     }
 
     suspend fun loginUser(email: String, password: String): LoginResponse {
         return try {
-            val response = api.login(email, password)
-            // Store the authenticated API service for future use
+            val response = apiService.login(email, password)
             response.loginResult?.token?.let { token ->
-                authenticatedApi = ApiConfig.getAuthenticatedApiService(token)
+                ApiConfig.getAuthenticatedApiService(token)
             }
             response
         } catch (exception: HttpException) {
             val errorJson = exception.response()?.errorBody()?.string()
             val errorResponse = Gson().fromJson(errorJson, ErrorResponse::class.java)
-            throw exception
+            throw Exception("Login failed: ${errorResponse.message}")
         }
     }
 
     suspend fun storeUserSession(user: UserModel) {
-        userPreferences.saveSession(user)
+        preference.saveSession(user)
     }
 
     fun retrieveUserSession(): Flow<UserModel> {
         // Mapping dari Flow<UserSession> ke Flow<UserModel> jika UserPreference mengembalikan UserSession
-        return userPreferences.getSession().map { userSession ->
+        return preference.getSession().map { userSession ->
             UserModel(
                 id = userSession.id,
                 name = userSession.name,
@@ -63,24 +62,23 @@ class UserManager(
     }
 
     suspend fun clearSession() {
-        userPreferences.logout()
+        preference.logout()
     }
 
     suspend fun fetchStories(
         authToken: String,
         page: Int? = null,
         size: Int? = null,
-        locationFilter: Int? = null // Disesuaikan agar null diterima
+        locationFilter: Int? = null
     ): StoryResponse {
-        // Pastikan parameter yang diberikan tidak null jika API tidak menerima null
         val validPage = page ?: 1
         val validSize = size ?: 10
         val validLocationFilter = locationFilter ?: 0
-        return api.getStories(authToken, validPage, validSize, validLocationFilter)
+        return apiService.getStories(authToken, validPage, validSize, validLocationFilter)
     }
 
     suspend fun fetchStoryDetails(authToken: String, storyId: String): DetailStoryResponse {
-        return api.getStoryDetail(authToken, storyId)
+        return apiService.getStoryDetail(authToken, storyId)
     }
 
     suspend fun uploadStory(
@@ -90,19 +88,16 @@ class UserManager(
         latitude: RequestBody? = null,
         longitude: RequestBody? = null
     ): AddResponse {
-        return api.addStory(authToken, image, description, latitude, longitude)
+        return apiService.addStory(authToken, image, description, latitude, longitude)
     }
 
     companion object {
         @Volatile
         private var INSTANCE: UserManager? = null
 
-        fun createInstance(
-            userPreferences: UserPreference,
-            api: ApiService
-        ): UserManager {
+        fun createInstance(apiService: ApiService, preference: UserPreference): UserManager {
             return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: UserManager(userPreferences, api).also { INSTANCE = it }
+                INSTANCE ?: UserManager(apiService, preference).also { INSTANCE = it }
             }
         }
     }

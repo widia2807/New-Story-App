@@ -20,8 +20,8 @@ import com.example.mystoryapp.data.userpref.dataStore
 import com.example.mystoryapp.databinding.ActivityLoginBinding
 import com.example.mystoryapp.ui.main.main1.MainActivity
 import com.example.mystoryapp.ui.main.main2.ViewModelFactory
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -74,30 +74,39 @@ class LoginActivity : AppCompatActivity() {
         val email = binding.emailEditText.text.toString()
         val password = binding.passwordEditText.text.toString()
 
+        Timber.d("Login attempt with email: $email")
+
         if (validateInputs(email, password)) {
             binding.loginButton.isEnabled = false
             binding.loadingIndicator.visibility = View.VISIBLE
 
             lifecycleScope.launch {
                 viewModel.login(email, password).collect { result ->
+                    Timber.d("Login result received: $result")
                     when (result) {
                         is NetworkResult.Success -> {
                             val loginResponse = result.data as LoginResponse
+                            Timber.d("Login successful: userId=${loginResponse.loginResult?.userId}")
+
                             val session = UserSession(
                                 userId = loginResponse.loginResult?.userId ?: "",
                                 token = loginResponse.loginResult?.token ?: "",
                                 email = email,
                                 name = loginResponse.loginResult?.name ?: "",
-                                isLoggedIn = true  // Make sure this is set to true
+                                isLoggedIn = true
                             )
+
                             viewModel.saveUserSession(session)
-                            navigateToHome()  // This should directly navigate to MainActivity
+
+                            // Remove the session verification and delay
+                            navigateToHome()
                         }
                         is NetworkResult.Error -> {
+                            Timber.e("Login error: ${result.message}")
                             handleLoginError(result.message, email)
                         }
                         is NetworkResult.Loading -> {
-                            // Loading state handled by initial visibility changes
+                            Timber.d("Login loading state")
                         }
                     }
                     binding.loginButton.isEnabled = true
@@ -155,14 +164,20 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun checkUserSession() {
+        Timber.d("Checking user session")
         lifecycleScope.launch {
             viewModel.getUserSession().collect { session ->
+                Timber.d("Session check: isLoggedIn=${session.isLoggedIn}, hasToken=${session.token.isNotEmpty()}")
                 if (session.isLoggedIn && session.token.isNotEmpty()) {
+                    Timber.d("Valid session found, navigating to home")
                     navigateToHome()
+                } else {
+                    Timber.d("No valid session found")
                 }
             }
         }
     }
+
 
     private fun setupAnimations() {
         val logo = binding.imageView
@@ -210,6 +225,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun navigateToHome() {
+        Timber.d("Navigating to MainActivity")
         startActivity(Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })

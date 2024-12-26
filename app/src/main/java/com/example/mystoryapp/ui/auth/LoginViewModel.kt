@@ -25,16 +25,21 @@ class LoginViewModel(
     val loginState: StateFlow<NetworkResult<LoginResponse>> = _loginState
 
     fun login(email: String, password: String) = flow {
+        Timber.d("Starting login process for email: $email")
         emit(NetworkResult.Loading)
         try {
             val response = userManager.loginUser(email, password)
+            Timber.d("Login response received: error=${response.error}, message=${response.message}")
+
             if (response.error == false) {
+                Timber.d("Login successful: userId=${response.loginResult?.userId}, name=${response.loginResult?.name}")
                 emit(NetworkResult.Success(response))
             } else {
+                Timber.e("Login failed: ${response.message}")
                 emit(NetworkResult.Error(response.message ?: "Unknown error occurred"))
             }
         } catch (e: Exception) {
-            Timber.e(e, "Login error")
+            Timber.e(e, "Login error: ${e.message}")
             emit(NetworkResult.Error(e.message ?: "Network error occurred"))
         }
     }
@@ -42,6 +47,7 @@ class LoginViewModel(
     fun saveUserSession(session: UserSession) {
         viewModelScope.launch {
             try {
+                Timber.d("Saving user session: userId=${session.userId}, email=${session.email}, isLoggedIn=${session.isLoggedIn}")
                 preferences.saveSession(
                     UserModel(
                         email = session.email,
@@ -51,28 +57,38 @@ class LoginViewModel(
                         name = session.name
                     )
                 )
+                Timber.d("User session saved successfully")
             } catch (e: Exception) {
                 Timber.e(e, "Error saving user session")
             }
         }
     }
 
-
-    fun getUserSession(): Flow<UserSession> = preferences.getSession()
+    fun getUserSession(): Flow<UserSession> {
+        Timber.d("Getting user session")
+        return preferences.getSession().also { flow ->
+            viewModelScope.launch {
+                flow.collect { session ->
+                    Timber.d("Current session state: userId=${session.userId}, isLoggedIn=${session.isLoggedIn}, tokenEmpty=${session.token.isEmpty()}")
+                }
+            }
+        }
+    }
 
     fun verifySession() {
         viewModelScope.launch {
+            Timber.d("Verifying session")
             preferences.getSession().collect { session ->
-                Timber.d("Session state: isLoggedIn=${session.isLoggedIn}, token=${session.token}")
+                Timber.d("Session verification: isLoggedIn=${session.isLoggedIn}, hasToken=${session.token.isNotEmpty()}, userId=${session.userId}")
             }
         }
     }
 }
-
 class LoginViewModelFactory(
     private val userManager: UserManager,
     private val preferences: UserPreference
 ) : ViewModelProvider.Factory {
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
             return LoginViewModel(userManager, preferences) as T

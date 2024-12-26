@@ -13,7 +13,7 @@ import kotlinx.coroutines.runBlocking
 object DependencyProvider {
     fun createUserRepository(context: Context, apiService: ApiService): UserManager {
         val preferences = UserPreference.getInstance(context.dataStore)
-        return UserManager.createInstance(preferences, apiService)
+        return UserManager.createInstance(apiService, preferences)
     }
 
     fun createStoryRepository(context: Context): StoryManager {

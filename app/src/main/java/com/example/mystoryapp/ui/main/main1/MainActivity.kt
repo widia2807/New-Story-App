@@ -22,6 +22,7 @@ import com.example.mystoryapp.ui.main.main2.WelcomeActivity
 import com.example.mystoryapp.ui.story.UploadStoryActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
 
@@ -46,10 +47,14 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun setupObservers() {
+        Timber.d("Setting up observers in MainActivity")
         viewModel.getSession().observe(this) { user ->
-            if (!user.isLogin|| user.token.isBlank()) {
+            Timber.d("Session state in MainActivity: isLogin=${user.isLogin}, tokenBlank=${user.token.isBlank()}")
+            if (!user.isLogin && user.token.isBlank()) {  // Changed condition to AND
+                Timber.d("No valid session found, navigating to Welcome")
                 navigateToWelcome()
             } else {
+                Timber.d("Valid session found, fetching stories")
                 fetchStories()
             }
         }
